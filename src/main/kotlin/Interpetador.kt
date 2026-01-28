@@ -1,6 +1,7 @@
 package org.gustavolyra.portugolpp
 
 import ehPonto
+import helpers.getAbsolutePath
 import models.Ambiente
 import models.Valor
 import models.enums.LOOP
@@ -9,10 +10,10 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.portugolpp.PortugolPPParser.*
 import processors.*
-import java.io.File
+import java.nio.file.Files
 
 
-@Suppress("REDUNDANT_OVERRIDE", "ABSTRACT_MEMBER_NOT_IMPLEMENTED")
+@Suppress("REDUNDANT_OVERRIDE")
 class Interpretador : PortugolPPBaseVisitor<Valor>() {
     /** Ambiente global que contém todas as definições de classes, interfaces e funções globais */
     private var global = Ambiente()
@@ -68,7 +69,8 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
         arquivosImportados.add(nomeArquivo)
 
         try {
-            val conteudo = File(nomeArquivo).readText()
+            val path = getAbsolutePath(nomeArquivo)
+            val conteudo = Files.readString(path)
             val lexer = PortugolPPLexer(CharStreams.fromString(conteudo))
             val tokens = CommonTokenStream(lexer)
             val parser = PortugolPPParser(tokens)
@@ -119,12 +121,10 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
         obterSuperclasseSeHouver(ctx)?.let { sc ->
             validarSuperclasseExiste(sc, nomeClasse, global)
         }
-        indiceDaPalavra(ctx, "implementa")
-            .takeIf { it >= 0 }
-            ?.let { idx ->
-                val interfaces = lerIdentificadoresAteChave(ctx, idx + 1)
-                validarInterfacesOuErro(ctx, nomeClasse, interfaces, global)
-            }
+        indiceDaPalavra(ctx, "implementa").takeIf { it >= 0 }?.let { idx ->
+            val interfaces = lerIdentificadoresAteChave(ctx, idx + 1)
+            validarInterfacesOuErro(ctx, nomeClasse, interfaces, global)
+        }
         global.definirClasse(nomeClasse, ctx)
         return Valor.Nulo
     }
@@ -160,7 +160,8 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
             declaracao = ctx,
             tipoRetorno = tipoRetorno,
             closure = ambiente,
-            implementacao = definirImplementacao(ctx, nome, Ambiente(ambiente)))
+            implementacao = definirImplementacao(ctx, nome, Ambiente(ambiente))
+        )
         ambiente.definir(nome, func)
         return func
     }
@@ -247,6 +248,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
             id != null -> rhs.also { v ->
                 ambiente.atualizarOuDefinir(id.text, v)
             }
+
             acesso != null -> {
                 val obj = visit(acesso.primario()) as? Valor.Objeto
                     ?: throw SemanticError("Não é possível atribuir a uma propriedade de um não-objeto")
@@ -254,6 +256,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
                 obj.campos[acesso.ID().text] = v
                 v
             }
+
             arr != null -> {
                 when (val container = visit(arr.primario())) {
                     is Valor.Lista -> {
@@ -277,6 +280,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
                     )
                 }
             }
+
             else -> throw SemanticError("Erro de sintaxe na atribuição")
         }
     }
@@ -456,8 +460,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
     }
 
 
-    private fun ehChamada(ctx: ChamadaContext, i: Int, n: Int) =
-        (i + 2) < n && ctx.getChild(i + 2).text == "("
+    private fun ehChamada(ctx: ChamadaContext, i: Int, n: Int) = (i + 2) < n && ctx.getChild(i + 2).text == "("
 
     private fun extrairArgumentosEPasso(ctx: ChamadaContext, i: Int, n: Int): Pair<List<Valor>, Int> {
         val temArgsCtx = (i + 3) < n && ctx.getChild(i + 3) is ArgumentosContext
@@ -475,8 +478,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
         return executarMetodo(obj, metodo, argumentos)
     }
 
-    private fun lerPropriedadeOuNulo(obj: Valor.Objeto, nome: String): Valor? =
-        buscarPropriedadeNaHierarquia(obj, nome)
+    private fun lerPropriedadeOuNulo(obj: Valor.Objeto, nome: String): Valor? = buscarPropriedadeNaHierarquia(obj, nome)
 
     override fun visitChamada(ctx: ChamadaContext): Valor {
         ctx.acessoArray()?.let { return visit(it) }
@@ -614,8 +616,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
     private fun validarAcessoArray(ctx: AcessoArrayContext, container: Valor.Lista): Valor {
         val indice = visit(ctx.expressao(0))
         if (indice !is Valor.Inteiro) throw SemanticError("Índice de lista deve ser um número inteiro")
-        if (indice.valor < 0 || indice.valor >= container.tamanho)
-            throw SemanticError("Índice fora dos limites da lista: ${indice.valor}")
+        if (indice.valor < 0 || indice.valor >= container.tamanho) throw SemanticError("Índice fora dos limites da lista: ${indice.valor}")
         return container.elementos[indice.valor]
     }
 
@@ -704,7 +705,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
         }
         val funcao = resolverFuncao(nome)
         return funcao.implementacao?.invoke(argumentos)
-                ?: throw SemanticError("Função '$nome' não possui implementação.")
+            ?: throw SemanticError("Função '$nome' não possui implementação.")
     }
 
 
@@ -768,8 +769,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
         if (match != null) {
             val nomeClasse = match.groupValues[1]
 
-            val classe =
-                global.obterClasse(nomeClasse) ?: throw SemanticError("Classe não encontrada: $nomeClasse")
+            val classe = global.obterClasse(nomeClasse) ?: throw SemanticError("Classe não encontrada: $nomeClasse")
             return criarObjetoClasse(nomeClasse, ctx, classe)
         } else {
             throw SemanticError("Sintaxe inválida para criação de objeto")
@@ -787,6 +787,7 @@ class Interpretador : PortugolPPBaseVisitor<Valor>() {
                     it.toInt()
                 )
             }
+
             ctx.TEXTO_LITERAL() != null -> Valor.Texto(ctx.TEXTO_LITERAL().text.removeSurrounding("\""))
             ctx.ID() != null && !ctx.text.startsWith("novo") -> resolverIdPrimario(ctx);
             ctx.text == "verdadeiro" -> Valor.Logico(true)

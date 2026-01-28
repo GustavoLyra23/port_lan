@@ -1,9 +1,11 @@
 import constants.EXTENSAO
+import helpers.getAbsolutePath
 import org.antlr.v4.runtime.*
 import org.gustavolyra.portugolpp.Interpretador
 import org.gustavolyra.portugolpp.PortugolPPLexer
 import org.gustavolyra.portugolpp.PortugolPPParser
 import java.io.File
+import kotlin.io.path.readText
 import kotlin.system.exitProcess
 
 var interpretador = Interpretador()
@@ -28,6 +30,7 @@ fun modoInterativo() {
                 val caminho = input.substring(4).trim()
                 executarArquivo(caminho)
             }
+
             input == "reset" -> interpretador = Interpretador()
             else -> executarPortugolPP(input)
         }
@@ -36,9 +39,10 @@ fun modoInterativo() {
 
 fun executarArquivo(caminho: String) {
     try {
-        val arquivo = File(caminho)
-        if (!validarArquivo(arquivo)) return
-        val fileData = arquivo.readText()
+
+        val pathMain = getAbsolutePath(caminho)
+        if (!validarArquivo(pathMain.toFile())) return
+        val fileData = pathMain.readText()
         executarPortugolPP(fileData)
     } catch (e: Exception) {
         println("Erro ao ler/executar o arquivo: ${e.message}")
@@ -52,7 +56,6 @@ fun executarPortugolPP(codigo: String) {
         val lexer = PortugolPPLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = PortugolPPParser(tokens)
-
         parser.removeErrorListeners()
         parser.addErrorListener(object : BaseErrorListener() {
             override fun syntaxError(
@@ -63,28 +66,28 @@ fun executarPortugolPP(codigo: String) {
                 msg: String?,
                 e: RecognitionException?
             ) {
-                println("Erro de sintaxe na linha $line:$charPositionInLine - $msg")
+                println("Erro de sintaxe na linha $line:$charPositionInLine")
             }
         })
 
         val tree = parser.programa()
         if (tree == null) {
-            println("ERRO: Análise sintática falhou árvore sintática nula...!")
+            println("ERRO: Analise sintatica falhou arvore sintática nula...!")
             return
         }
         interpretador.interpretar(tree)
     } catch (e: Exception) {
-        println("Erro ao executar o programa: ${e.message}")
+        println("Erro ao executar o programa ${e.message}")
     }
 }
 
 fun validarArquivo(arquivo: File): Boolean {
     if (!arquivo.exists()) {
-        println("Erro: Arquivo não encontrado!")
+        println("Erro: Arquivo nao encontrado!")
         return false
     }
     if (!arquivo.name.endsWith(EXTENSAO)) {
-        println("Formato do arquivo inválido! Use arquivos .pplus")
+        println("Formato do arquivo invalido! Use arquivos .pplus")
         return false
     }
     return true

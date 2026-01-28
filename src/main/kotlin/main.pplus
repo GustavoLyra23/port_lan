@@ -1,8 +1,10 @@
 var numeros: Lista = [10];
-numeros[8] = 23;
 numeros[8] = nulo;
+numeros[8] = 23;
 escrever(numeros);
 
 var data = nulo;
 data = 23;
 escrever(data);
+
+
