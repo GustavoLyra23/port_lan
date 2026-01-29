@@ -26,8 +26,11 @@
 ```bash
 git clone <repository-url>
 cd pplus
-``` 
-#### Compile project
+```
+
+### How to Compile the project
+
+#### Build it using gradle
 
 ```bash
 ./gradlew build
