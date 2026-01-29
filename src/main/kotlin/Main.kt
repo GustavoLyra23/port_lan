@@ -51,9 +51,9 @@ fun execFile(file: Path) {
 }
 
 
-fun execEngine(codigo: String) {
+fun execEngine(code: String) {
     try {
-        val input = CharStreams.fromString(codigo)
+        val input = CharStreams.fromString(code)
         val lexer = PortugolPPLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = PortugolPPParser(tokens)
