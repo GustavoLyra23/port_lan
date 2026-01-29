@@ -1,6 +1,6 @@
 package processors
 
-import extrairValorString
+import extractValueToString
 import models.Valor
 
 fun processarAdicao(operador: String?, esquerda: Valor, direita: Valor): Valor {
@@ -16,8 +16,8 @@ fun processarAdicao(operador: String?, esquerda: Valor, direita: Valor): Valor {
 fun resolverOperadorAdicao(esquerda: Valor, direita: Valor): Valor {
     return when {
         esquerda is Valor.Texto || direita is Valor.Texto -> {
-            val esquerdaStr = extrairValorString(esquerda)
-            val direitaStr = extrairValorString(direita)
+            val esquerdaStr = extractValueToString(esquerda)
+            val direitaStr = extractValueToString(direita)
             Valor.Texto(esquerdaStr + direitaStr)
         }
 

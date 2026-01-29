@@ -1,6 +1,6 @@
 package processors
 
-import extrairValorParaImpressao
+import extractValueToPrint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -56,12 +56,12 @@ fun registrarFuncoesIO(global: Ambiente) {
         Valor.Nulo
     })
     global.definir("escrever", Valor.Funcao("escrever", null, null, global) { args ->
-        val valores = args.map { extrairValorParaImpressao(it) }
+        val valores = args.map { extractValueToPrint(it) }
         println(valores.joinToString(" "))
         Valor.Nulo
     })
     global.definir("imprimir", Valor.Funcao("imprimir", null, null, global) { args ->
-        val valores = args.map { extrairValorParaImpressao(it) }
+        val valores = args.map { extractValueToPrint(it) }
         println(valores.joinToString(" "))
         Valor.Nulo
     })

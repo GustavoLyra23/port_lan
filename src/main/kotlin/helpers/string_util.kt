@@ -1,16 +1,16 @@
 import models.Valor
 import org.gustavolyra.portugolpp.PortugolPPParser.ChamadaContext
 
-fun extrairValorParaImpressao(valor: Valor): String {
+fun extractValueToPrint(valor: Valor): String {
     return when (valor) {
         is Valor.Lista -> {
-            val elementos = valor.elementos.map { extrairValorParaImpressao(it) }
+            val elementos = valor.elementos.map { extractValueToPrint(it) }
             "[${elementos.joinToString(", ")}]"
         }
 
         is Valor.Mapa -> {
             val entradas = valor.elementos.map { (chave, valor) ->
-                "${extrairValorParaImpressao(chave)}: ${extrairValorParaImpressao(valor)}"
+                "${extractValueToPrint(chave)}: ${extractValueToPrint(valor)}"
             }
             "[[${entradas.joinToString(", ")}]]"
         }
@@ -26,7 +26,7 @@ fun extrairValorParaImpressao(valor: Valor): String {
     }
 }
 
-fun extrairValorString(valor: Valor): String {
+fun extractValueToString(valor: Valor): String {
     return when (valor) {
         is Valor.Inteiro -> valor.valor.toString()
         is Valor.Real -> valor.valor.toString()
@@ -34,13 +34,13 @@ fun extrairValorString(valor: Valor): String {
         is Valor.Nulo -> "nulo"
         is Valor.Texto -> valor.valor
         is Valor.Lista -> {
-            val elementos = valor.elementos.map { extrairValorString(it) }
+            val elementos = valor.elementos.map { extractValueToString(it) }
             "[${elementos.joinToString(", ")}]"
         }
 
         is Valor.Mapa -> {
             val entradas = valor.elementos.map { (chave, valor) ->
-                "${extrairValorString(chave)}: ${extrairValorString(valor)}"
+                "${extractValueToString(chave)}: ${extractValueToString(valor)}"
             }
             "[[${entradas.joinToString(", ")}]]"
         }
@@ -49,5 +49,5 @@ fun extrairValorString(valor: Valor): String {
     }
 }
 
-fun ehPonto(ctx: ChamadaContext, i: Int) =
+fun isDot(ctx: ChamadaContext, i: Int) =
     i < ctx.childCount && ctx.getChild(i).text == "."

@@ -1,6 +1,6 @@
 package org.gustavolyra.portugolpp
 
-import ehPonto
+import isDot
 import helpers.solvePath
 import models.Ambiente
 import models.Valor
@@ -486,7 +486,7 @@ class Interpreter : PortugolPPBaseVisitor<Valor>() {
 
         while (i < n) {
             if (r == Valor.Nulo) return Valor.Nulo
-            if (!ehPonto(ctx, i)) break
+            if (!isDot(ctx, i)) break
 
             val id = ctx.getChild(i + 1).text
             val obj = comoObjetoOuErro(r)

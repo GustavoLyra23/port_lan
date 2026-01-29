@@ -1,7 +1,7 @@
 package helpers
 
 import STATIC_PATH
-import constants.EXTENSAO
+import constants.EXTENSION
 import java.io.File
 import java.nio.file.Path
 
@@ -20,7 +20,7 @@ fun validateFile(arquivo: File): Boolean {
         println("Erro: Arquivo nao encontrado!")
         return false
     }
-    if (!arquivo.name.endsWith(EXTENSAO)) {
+    if (!arquivo.name.endsWith(EXTENSION)) {
         println("Formato do arquivo invalido! Use arquivos .pplus")
         return false
     }
