@@ -76,7 +76,7 @@ fun execEngine(codigo: String) {
             println("ERRO: Analise sintatica falhou arvore sintática nula...!")
             return
         }
-        interpreter.interpretar(tree)
+        interpreter.interpret(tree)
     } catch (e: Exception) {
         println("Erro ao executar o programa ${e.message}")
     }

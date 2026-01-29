@@ -18,12 +18,12 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     private var global = Environment()
 
     // actual exec environment
-    private var ambiente = global
+    private var environment = global
 
     // ref to the function being executed
-    private var funcaoAtual: Value.Funcao? = null
+    private var actualFunction: Value.Funcao? = null
 
-    private val arquivosImportados = mutableSetOf<String>()
+    private val importedModules = mutableSetOf<String>()
 
     init {
         defineDefaultFunctions(global)
@@ -62,11 +62,11 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     }
 
 
-    fun processarImport(nomeArquivo: String) {
-        if (arquivosImportados.contains(nomeArquivo)) return
-        arquivosImportados.add(nomeArquivo)
+    fun processarImport(filName: String) {
+        if (importedModules.contains(filName)) return
+        importedModules.add(filName)
         try {
-            val path = solvePath(nomeArquivo)
+            val path = solvePath(filName)
             val conteudo = Files.readString(path)
             val lexer = PortugolPPLexer(CharStreams.fromString(conteudo))
             val tokens = CommonTokenStream(lexer)
@@ -83,7 +83,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         }
     }
 
-    fun interpretar(tree: ProgramaContext) {
+    fun interpret(tree: ProgramaContext) {
         try {
             tree.importarDeclaracao()?.forEach { import ->
                 visitImportarDeclaracao(import)
@@ -98,8 +98,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     }
 
     override fun visitDeclaracaoInterface(ctx: DeclaracaoInterfaceContext): Value {
-        val nomeInterface = ctx.ID().text
-        global.setInterface(nomeInterface, ctx)
+        val interfaceName = ctx.ID().text
+        global.setInterface(interfaceName, ctx)
         return Value.Null
     }
 
@@ -113,119 +113,119 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     }
 
     override fun visitDeclaracaoClasse(ctx: DeclaracaoClasseContext): Value {
-        val nomeClasse = ctx.ID(0).text
+        val className = ctx.ID(0).text
 
         getSuperClass(ctx)?.let { sc ->
-            validateSuperClass(sc, nomeClasse, global)
+            validateSuperClass(sc, className, global)
         }
         getIndexFromWord(ctx, "implementa").takeIf { it >= 0 }?.let { idx ->
-            val interfaces = readIdentitiesToKey(ctx, idx + 1)
-            validateInterface(ctx, nomeClasse, interfaces, global)
+            val interfaceList = readIdentitiesToKey(ctx, idx + 1)
+            validateInterface(ctx, className, interfaceList, global)
         }
-        global.defineClass(nomeClasse, ctx)
+        global.defineClass(className, ctx)
         return Value.Null
     }
 
     override fun visitDeclaracaoVar(ctx: DeclaracaoVarContext): Value {
-        val nome = ctx.ID().text
-        val tipo = ctx.tipo()?.text
-        val valor = when {
+        val name = ctx.ID().text
+        val type = ctx.tipo()?.text
+        val value = when {
             (ctx.expressao() != null) -> visit(ctx.expressao());
             else -> visit(ctx.declaracaoFuncao())
         }
 
-        if (tipo != null) {
-            if (valor is Value.Object) {
-                val nomeClasse = valor.klass
-                if (tipo != nomeClasse && valor.superClasse != tipo && !valor.interfaces.contains(tipo)) throw SemanticError(
-                    "Tipo de variável '$tipo' não corresponde ao tipo do objeto '$nomeClasse'"
+        if (type != null) {
+            if (value is Value.Object) {
+                val nomeClasse = value.klass
+                if (type != nomeClasse && value.superClasse != type && !value.interfaces.contains(type)) throw SemanticError(
+                    "Tipo de variável '$type' não corresponde ao tipo do objeto '$nomeClasse'"
                 )
             } else {
-                if (tipo != valor.typeString()) throw SemanticError("Tipo da variavel nao corresponde ao tipo correto atribuido.")
+                if (type != value.typeString()) throw SemanticError("Tipo da variavel nao corresponde ao tipo correto atribuido.")
             }
         }
-        ambiente.define(nome, valor)
+        environment.define(name, value)
         return Value.Null
     }
 
     override fun visitDeclaracaoFuncao(ctx: DeclaracaoFuncaoContext): Value {
-        val nome = ctx.ID().text
-        val tipoRetorno = ctx.tipo()?.text
-        if (isReturnInvalid(tipoRetorno, global)) throw SemanticError("Tipo de retorno inválido: $tipoRetorno")
+        val name = ctx.ID().text
+        val returnType = ctx.tipo()?.text
+        if (isReturnInvalid(returnType, global)) throw SemanticError("Tipo de retorno inválido: $returnType")
         val func = Value.Funcao(
-            nome = nome,
+            nome = name,
             declaracao = ctx,
-            tipoRetorno = tipoRetorno,
-            closure = ambiente,
-            implementacao = definirImplementacao(ctx, nome, Environment(ambiente))
+            tipoRetorno = returnType,
+            closure = environment,
+            implementacao = definirImplementacao(ctx, name, Environment(environment))
         )
-        ambiente.define(nome, func)
+        environment.define(name, func)
         return func
     }
 
     private fun definirImplementacao(
-        ctx: DeclaracaoFuncaoContext, nome: String, closure: Environment
+        ctx: DeclaracaoFuncaoContext, name: String, closure: Environment
     ): (List<Value>) -> Value {
         return { argumentos ->
-            val numParamsDeclarados = ctx.listaParams()?.param()?.size ?: 0
-            if (argumentos.size > numParamsDeclarados) throw SemanticError("Função '$nome' recebeu ${argumentos.size} parâmetros, mas espera $numParamsDeclarados")
+            val declaredParameters = ctx.listaParams()?.param()?.size ?: 0
+            if (argumentos.size > declaredParameters) throw SemanticError("Função '$name' recebeu ${argumentos.size} parâmetros, mas espera $declaredParameters")
             ctx.listaParams()?.param()?.forEachIndexed { i, param ->
                 if (i < argumentos.size) closure.define(param.ID().text, argumentos[i])
             }
 
-            val ambienteAnterior = ambiente
-            ambiente = closure
+            val actualEnviromnent = environment
+            environment = closure
             val funcao = Value.Funcao(
                 ctx.ID().text, ctx, ctx.tipo()?.text, global
             )
-            val funcaoAnterior = funcaoAtual
-            funcaoAtual = funcao
+            val oldFunction = actualFunction
+            actualFunction = funcao
             try {
                 visit(ctx.bloco())
                 Value.Null
-            } catch (retorno: RetornoException) {
-                retorno.value
+            } catch (err: RetornoException) {
+                err.value
             } finally {
-                ambiente = ambienteAnterior
-                funcaoAtual = funcaoAnterior
+                environment = actualEnviromnent
+                actualFunction = oldFunction
             }
         }
     }
 
     //TODO: refatorar vist para declaracao de return
     override fun visitDeclaracaoRetornar(ctx: DeclaracaoRetornarContext): Value {
-        val valueRetorno = ctx.expressao()?.let { visit(it) } ?: Value.Null
+        val returnVal = ctx.expressao()?.let { visit(it) } ?: Value.Null
         // apenas valida se estivermos dentro de uma funcao
-        if (funcaoAtual != null && funcaoAtual!!.tipoRetorno != null) {
-            val tipoEsperado = funcaoAtual!!.tipoRetorno
-            val tipoAtual = valueRetorno.typeString()
-            if (tipoEsperado != tipoAtual) {
-                if (valueRetorno is Value.Object) {
+        if (actualFunction != null && actualFunction!!.tipoRetorno != null) {
+            val expectedType = actualFunction!!.tipoRetorno
+            val actualType = returnVal.typeString()
+            if (expectedType != actualType) {
+                if (returnVal is Value.Object) {
                     //TODO: colocar verificao de superclasses e interfaces...
-                    if (valueRetorno.superClasse == tipoEsperado || valueRetorno.interfaces.contains(tipoEsperado)) throw RetornoException(
-                        valueRetorno
+                    if (returnVal.superClasse == expectedType || returnVal.interfaces.contains(expectedType)) throw RetornoException(
+                        returnVal
                     )
                 }
-                throw SemanticError("Erro de tipo: funcao '${funcaoAtual!!.nome}' deve retornar '$tipoEsperado', mas esta retornando '$tipoAtual'")
+                throw SemanticError("Erro de tipo: funcao '${actualFunction!!.nome}' deve retornar '$expectedType', mas esta retornando '$actualType'")
             }
         }
-        throw RetornoException(valueRetorno)
+        throw RetornoException(returnVal)
     }
 
     override fun visitDeclaracaoSe(ctx: DeclaracaoSeContext): Value {
-        val condicao = visit(ctx.expressao())
-        if (condicao !is Value.Logico) throw SemanticError("Condição do 'if' deve ser lógica")
-        return if (condicao.valor) visit(ctx.declaracao(0)) else ctx.declaracao(1)?.let { visit(it) } ?: Value.Null
+        val condition = visit(ctx.expressao())
+        if (condition !is Value.Logico) throw SemanticError("Condição do 'if' deve ser lógica")
+        return if (condition.valor) visit(ctx.declaracao(0)) else ctx.declaracao(1)?.let { visit(it) } ?: Value.Null
     }
 
     override fun visitBloco(ctx: BlocoContext): Value {
-        val anterior = ambiente
-        ambiente = Environment(anterior)
-        ambiente.thisObject = anterior.thisObject
+        val previous = environment
+        environment = Environment(previous)
+        environment.thisObject = previous.thisObject
         try {
             ctx.declaracao().forEach { visit(it) }
         } finally {
-            ambiente = anterior
+            environment = previous
         }
         return Value.Null
     }
@@ -239,18 +239,18 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             else -> throw SemanticError("Atribuicao invalida")
         }
         val id = ctx.ID()
-        val acesso = ctx.acesso()
+        val acess = ctx.acesso()
         val arr = ctx.acessoArray()
         return when {
             id != null -> rhs.also { v ->
-                ambiente.updateOrDefine(id.text, v)
+                environment.updateOrDefine(id.text, v)
             }
 
-            acesso != null -> {
-                val obj = visit(acesso.primario()) as? Value.Object
+            acess != null -> {
+                val obj = visit(acess.primario()) as? Value.Object
                     ?: throw SemanticError("Não é possível atribuir a uma propriedade de um não-objeto")
                 val v = rhs
-                obj.campos[acesso.ID().text] = v
+                obj.campos[acess.ID().text] = v
                 v
             }
 
@@ -259,9 +259,9 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
                     is Value.List -> {
                         val i = visit(arr.expressao(0)) as? Value.Integer
                             ?: throw SemanticError("Índice de lista deve ser um número inteiro")
-                        val indice = i.valor
-                        if (indice < 0) throw SemanticError("Índice negativo não permitido: $indice")
-                        container.elementos[indice] = rhs
+                        val index = i.valor
+                        if (index < 0) throw SemanticError("Índice negativo não permitido: $index")
+                        container.elementos[index] = rhs
                         rhs
                     }
 
@@ -289,103 +289,103 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             throw SemanticError("Tentativa de acessar propriedade de um não-objeto")
         }
 
-        val propriedade = ctx.ID().text
+        val property = ctx.ID().text
 
-        val value = objeto.campos[propriedade] ?: return Value.Null
+        val value = objeto.campos[property] ?: return Value.Null
         return value
     }
 
     override fun visitLogicaOu(ctx: LogicaOuContext): Value {
-        var esquerda = visit(ctx.logicaE(0))
+        var left = visit(ctx.logicaE(0))
         for (i in 1 until ctx.logicaE().size) {
-            if (esquerda is Value.Logico && esquerda.valor) return Value.Logico(true)
-            val direita = visit(ctx.logicaE(i))
-            if (esquerda !is Value.Logico || direita !is Value.Logico) throw SemanticError("Operador 'ou' requer valores lógicos")
-            esquerda = Value.Logico(direita.valor)
+            if (left is Value.Logico && left.valor) return Value.Logico(true)
+            val right = visit(ctx.logicaE(i))
+            if (left !is Value.Logico || right !is Value.Logico) throw SemanticError("Operador 'ou' requer valores lógicos")
+            left = Value.Logico(right.valor)
         }
-        return esquerda
+        return left
     }
 
     override fun visitLogicaE(ctx: LogicaEContext): Value {
-        var esquerda = visit(ctx.igualdade(0))
+        var left = visit(ctx.igualdade(0))
         for (i in 1 until ctx.igualdade().size) {
-            if (esquerda is Value.Logico && !esquerda.valor) return Value.Logico(false)
-            val direita = visit(ctx.igualdade(i))
-            if (esquerda !is Value.Logico || direita !is Value.Logico) throw SemanticError("Operador 'e' requer valores lógicos")
-            esquerda = Value.Logico(direita.valor)
+            if (left is Value.Logico && !left.valor) return Value.Logico(false)
+            val right = visit(ctx.igualdade(i))
+            if (left !is Value.Logico || right !is Value.Logico) throw SemanticError("Operador 'e' requer valores lógicos")
+            left = Value.Logico(right.valor)
         }
-        return esquerda
+        return left
     }
 
     override fun visitIgualdade(ctx: IgualdadeContext): Value {
-        var esquerda = visit(ctx.comparacao(0))
+        var left = visit(ctx.comparacao(0))
 
         for (i in 1 until ctx.comparacao().size) {
-            val operador = ctx.getChild(i * 2 - 1).text
-            val direita = visit(ctx.comparacao(i))
+            val operator = ctx.getChild(i * 2 - 1).text
+            val right = visit(ctx.comparacao(i))
 
-            if (operador == "==") {
-                val resultado = when {
-                    esquerda == Value.Null && direita == Value.Null -> true
-                    esquerda == Value.Null || direita == Value.Null -> false
-                    else -> areEqual(esquerda, direita)
+            if (operator == "==") {
+                val result = when {
+                    left == Value.Null && right == Value.Null -> true
+                    left == Value.Null || right == Value.Null -> false
+                    else -> areEqual(left, right)
                 }
-                esquerda = Value.Logico(resultado)
-            } else if (operador == "!=") {
+                left = Value.Logico(result)
+            } else if (operator == "!=") {
                 val resultado = when {
-                    esquerda == Value.Null && direita == Value.Null -> false
-                    esquerda == Value.Null || direita == Value.Null -> true
-                    else -> !areEqual(esquerda, direita)
+                    left == Value.Null && right == Value.Null -> false
+                    left == Value.Null || right == Value.Null -> true
+                    else -> !areEqual(left, right)
                 }
-                esquerda = Value.Logico(resultado)
+                left = Value.Logico(resultado)
             }
         }
 
-        return esquerda
+        return left
     }
 
     override fun visitComparacao(ctx: ComparacaoContext): Value {
-        var esquerda = visit(ctx.adicao(0))
+        var left = visit(ctx.adicao(0))
         for (i in 1 until ctx.adicao().size) {
             val operador = ctx.getChild(i * 2 - 1).text
-            val direita = visit(ctx.adicao(i))
-            esquerda = when (operador) {
-                "<" -> compare("<", esquerda, direita)
-                "<=" -> compare("<=", esquerda, direita)
-                ">" -> compare(">", esquerda, direita)
-                ">=" -> compare(">=", esquerda, direita)
+            val right = visit(ctx.adicao(i))
+            left = when (operador) {
+                "<" -> compare("<", left, right)
+                "<=" -> compare("<=", left, right)
+                ">" -> compare(">", left, right)
+                ">=" -> compare(">=", left, right)
                 else -> throw SemanticError("Operador desconhecido: $operador")
             }
         }
-        return esquerda
+        return left
     }
 
 
     override fun visitAdicao(ctx: AdicaoContext): Value {
-        var esquerda = visit(ctx.multiplicacao(0))
+        var left = visit(ctx.multiplicacao(0))
         for (i in 1 until ctx.multiplicacao().size) {
             val operador = ctx.getChild(i * 2 - 1).text
-            val direita = visit(ctx.multiplicacao(i))
-            esquerda = processAdd(operador, esquerda, direita)
+            val right = visit(ctx.multiplicacao(i))
+            left = processAdd(operador, left, right)
         }
-        return esquerda
+        return left
     }
 
     override fun visitMultiplicacao(ctx: MultiplicacaoContext): Value {
-        var esquerda = visit(ctx.unario(0))
+        var left = visit(ctx.unario(0))
         for (i in 1 until ctx.unario().size) {
             val operador = ctx.getChild(i * 2 - 1).text
-            val direita = visit(ctx.unario(i))
-            esquerda = processMultiplication(operador, esquerda, direita)
+            val right = visit(ctx.unario(i))
+            left = processMultiplication(operador, left, right)
         }
-        return esquerda
+        return left
     }
 
     override fun visitUnario(ctx: UnarioContext): Value {
         if (ctx.childCount == 2) {
-            val operador = ctx.getChild(0).text
+            val operator = ctx.getChild(0).text
             val operando = visit(ctx.unario())
-            return when (operador) {
+            return when (operator) {
                 "!" -> if (operando is Value.Logico) Value.Logico(!operando.valor) else throw SemanticError("Operador '!' requer valor lógico")
                 "-" -> when (operando) {
                     is Value.Integer -> Value.Integer(-operando.valor)
@@ -393,21 +393,21 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
                     else -> throw SemanticError("Operador '-' requer valor numérico")
                 }
 
-                else -> throw SemanticError("Operador unário desconhecido: $operador")
+                else -> throw SemanticError("Operador unário desconhecido: $operator")
             }
         }
         return visit(ctx.getChild(0))
     }
 
-    private fun buscarPropriedadeNaHierarquia(`object`: Value.Object, nomeCampo: String): Value? {
-        val valorCampo = `object`.campos[nomeCampo]
-        if (valorCampo != null) {
-            return valorCampo
+    private fun buscarPropriedadeNaHierarquia(`object`: Value.Object, fieldName: String): Value? {
+        val fieldValue = `object`.campos[fieldName]
+        if (fieldValue != null) {
+            return fieldValue
         }
 
         if (`object`.superClasse != null) {
             val tempObjeto = criarObjetoTemporarioDaClasse(`object`.superClasse)
-            return buscarPropriedadeNaHierarquia(tempObjeto, nomeCampo)
+            return buscarPropriedadeNaHierarquia(tempObjeto, fieldName)
         }
 
         return null
@@ -425,10 +425,10 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         classe.declaracaoVar().forEach { decl ->
             val nomeCampo = decl.ID().text
             val value = decl.expressao()?.let {
-                val oldAmbiente = ambiente
-                ambiente = Environment(global).apply { thisObject = `object` }
+                val oldAmbiente = environment
+                environment = Environment(global).apply { thisObject = `object` }
                 val result = visit(it)
-                ambiente = oldAmbiente
+                environment = oldAmbiente
                 result
             } ?: Value.Null
             `object`.campos[nomeCampo] = value
@@ -457,7 +457,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     }
 
 
-    private fun ehChamada(ctx: ChamadaContext, i: Int, n: Int) = (i + 2) < n && ctx.getChild(i + 2).text == "("
+    private fun isCall(ctx: ChamadaContext, i: Int, n: Int) = (i + 2) < n && ctx.getChild(i + 2).text == "("
 
     private fun extrairArgumentosEPasso(ctx: ChamadaContext, i: Int, n: Int): Pair<List<Value>, Int> {
         val temArgsCtx = (i + 3) < n && ctx.getChild(i + 3) is ArgumentosContext
@@ -491,7 +491,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             val id = ctx.getChild(i + 1).text
             val obj = comoObjetoOuErro(r)
 
-            if (ehChamada(ctx, i, n)) {
+            if (isCall(ctx, i, n)) {
                 val (argumentos, passo) = extrairArgumentosEPasso(ctx, i, n)
                 r = chamarMetodoOuErro(obj, id, argumentos)
                 i += passo
@@ -689,11 +689,11 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
     }
 
     private fun resolverFuncao(nome: String): Value.Funcao =
-        runCatching { ambiente.get(nome) as? Value.Funcao }.getOrNull()
+        runCatching { environment.get(nome) as? Value.Funcao }.getOrNull()
             ?: throw SemanticError("Função não encontrada ou não é função: $nome")
 
     private fun chamadaFuncao(nome: String, argumentos: List<Value>): Value {
-        ambiente.thisObject?.let { obj ->
+        environment.thisObject?.let { obj ->
             buscarMetodoNaHierarquia(obj, nome)?.let { ctx ->
                 return executarMetodo(
                     obj, ctx, argumentos
@@ -717,8 +717,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         val funcao = Value.Funcao(
             metodo.ID().text, metodo, metodo.tipo()?.text, metodoEnvironment
         )
-        val funcaoAnterior = funcaoAtual
-        funcaoAtual = funcao
+        val funcaoAnterior = actualFunction
+        actualFunction = funcao
 
         val params = metodo.listaParams()?.param() ?: listOf()
         for (i in params.indices) {
@@ -732,8 +732,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             }
         }
 
-        val oldAmbiente = ambiente
-        ambiente = metodoEnvironment
+        val oldAmbiente = environment
+        environment = metodoEnvironment
 
         try {
             visit(metodo.bloco())
@@ -741,8 +741,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         } catch (retorno: RetornoException) {
             return retorno.value
         } finally {
-            ambiente = oldAmbiente
-            funcaoAtual = funcaoAnterior
+            environment = oldAmbiente
+            actualFunction = funcaoAnterior
         }
     }
 
@@ -758,7 +758,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             return chamadaFuncao(nome, argumentos)
         } else {
             try {
-                return ambiente.get(nome)
+                return environment.get(nome)
             } catch (e: Exception) {
                 throw e
             }
@@ -793,7 +793,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             ctx.ID() != null && !ctx.text.startsWith("novo") -> resolverIdPrimario(ctx);
             ctx.text == "verdadeiro" -> Value.Logico(true)
             ctx.text == "falso" -> Value.Logico(false)
-            ctx.text == "este" -> ambiente.thisObject ?: throw SemanticError("'este' fora de contexto de objeto")
+            ctx.text == "este" -> environment.thisObject ?: throw SemanticError("'este' fora de contexto de objeto")
             ctx.text.startsWith("novo") -> resolverClassePrimario(ctx)
             ctx.expressao() != null -> visit(ctx.expressao())
             else -> {
@@ -825,11 +825,11 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         classeBase.declaracaoVar().forEach { decl ->
             val nomeCampo = decl.ID().text
             if (!`object`.campos.containsKey(nomeCampo)) {
-                val oldAmbiente = ambiente
-                ambiente = Environment(global).apply { thisObject = `object` }
+                val oldAmbiente = environment
+                environment = Environment(global).apply { thisObject = `object` }
                 val value = decl.expressao()?.let { visit(it) } ?: Value.Null
                 `object`.campos[nomeCampo] = value
-                ambiente = oldAmbiente
+                environment = oldAmbiente
             }
         }
     }
@@ -844,11 +844,11 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
 
         classe.declaracaoVar().forEach { decl ->
             val nomeCampo = decl.ID().text
-            val oldAmbiente = ambiente
-            ambiente = Environment(global).apply { thisObject = `object` }
+            val oldAmbiente = environment
+            environment = Environment(global).apply { thisObject = `object` }
             val value = decl.expressao()?.let { visit(it) } ?: Value.Null
             `object`.campos[nomeCampo] = value
-            ambiente = oldAmbiente
+            environment = oldAmbiente
         }
 
         val inicializarMetodo = classe.declaracaoFuncao().find { it.ID().text == "inicializar" }
