@@ -606,8 +606,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
 
     private fun validarAcessoArray(ctx: AcessoArrayContext, container: Value.List): Value {
         val index = visit(ctx.expressao(0))
-        if (index !is Value.Integer) throw SemanticError("Índice de lista deve ser um número inteiro")
-        if (index.value < 0 || index.value >= container.size) throw SemanticError("Índice fora dos limites da lista: ${index.value}")
+        if (index !is Value.Integer) throw SemanticError("Indice de lista deve ser um numero inteiro")
+        if (index.value < 0 || index.value >= container.size) throw SemanticError("Indice fora dos limites da lista: ${index.value}")
         return container.elements[index.value]
     }
 
@@ -657,7 +657,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         return when (val container = visit(ctx.primario())) {
             is Value.List -> validarAcessoArray(ctx, container)
             is Value.Map -> validarAcessoMapa(ctx, container)
-            else -> throw SemanticError("Operação de acesso com índice não suportada para ${container::class.simpleName}")
+            else -> throw SemanticError("Operacao de acesso com indice nao suportada para ${container::class.simpleName}")
         }
     }
 
@@ -671,7 +671,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         val funcName = ctx.ID().text
         return if (ctx.primario() != null) {
             val obj = visit(ctx.primario())
-            if (obj !is Value.Object) throw SemanticError("Chamada de método em nao objeto")
+            if (obj !is Value.Object) throw SemanticError("Chamada de metodo em nao objeto")
             val classe =
                 global.getClass(obj.klass) ?: throw SemanticError("Classe nao encontrada: ${obj.klass}")
             val method = classe.declaracaoFuncao().find { it.ID().text == funcName }
@@ -684,7 +684,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
 
     private fun solveFunction(name: String): Value.Fun =
         runCatching { environment.get(name) as? Value.Fun }.getOrNull()
-            ?: throw SemanticError("Funçao nao encontrada ou nao seria função: $name")
+            ?: throw SemanticError("Funcao nao encontrada ou nao seria funcao: $name")
 
     private fun functionCall(nome: String, args: List<Value>): Value {
         environment.thisObject?.let { obj ->
@@ -764,10 +764,10 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         if (match != null) {
             val className = match.groupValues[1]
 
-            val `class` = global.getClass(className) ?: throw SemanticError("Classe não encontrada: $className")
+            val `class` = global.getClass(className) ?: throw SemanticError("Classe nao encontrada: $className")
             return createClassObject(className, ctx, `class`)
         } else {
-            throw SemanticError("Sintaxe inválida para criação de objeto")
+            throw SemanticError("Sintaxe invalida para criacao de objeto")
         }
     }
 
