@@ -60,7 +60,6 @@ java -jar build/libs/portugolpp.jar programa.pplus
 ```bash
 ./portugolpp.exe programa.pplus
 ```
-This is normal text and this is <span style="color: red;">red text</span>.
 <div>
 <img src="https://img.shields.io/badge/status-desenvolvimento-green.svg" alt="Status" />
 </div>
