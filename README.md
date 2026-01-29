@@ -36,13 +36,13 @@ cd pplus
 ./gradlew build
 ```
 
-#### create executable JAR
+#### Create executable JAR
 
 ```bash
 ./gradlew shadowJar
 ```
 
-#### generate Windows exe
+#### Generate Windows exe
 ```bash
 ./gradlew launch4j 
 ```
