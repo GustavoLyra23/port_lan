@@ -1,76 +1,28 @@
-## Sobre o Projeto
+## About the Project
+_P++_ is a programming language designed for Portuguese speakers, making programming learning easier through a syntax similar to Portugol, while including modern features from object-oriented languages.
 
-<mark>_P++_ é uma linguagem de programação destinada a falantes de português</mark>, facilitando o aprendizado de programação através
-de uma sintaxe semelhante ao Portugol, mas com recursos modernos de linguagens orientadas a objetos.
+## Features
+- **Friendly syntax** in Portuguese based on Portugol
+- **Object-Oriented Programming** with classes, inheritance, and interfaces
+- **Dynamic typing** to facilitate learning
+- **Control structures** (conditionals, loops)
+- **Functions and methods** with parameters and return values
+- **Native I/O functions** for input and output operations
+- **Collections** such as lists and maps
+- **Thread support** for asynchronous execution
+- **Multiple module support** – import from other files
+- **Closure support**
 
-## Características
+## System Requirements
+- Java JDK 21 or higher
+- Gradle 8.0 or higher
 
-- <mark>**Sintaxe amigável**</mark> em português baseada em Portugol
-- <mark>**Programação Orientada a Objetos**</mark> com classes, herança e interfaces
-- <mark>**Tipagem dinâmica**</mark> para facilitar o aprendizado
-- <mark>**Estruturas de controle**</mark> (condicionais, loops)
-- <mark>**Funções e métodos**</mark> com parâmetros e valores de retorno
-- <mark>**Funções nativas de E/S**</mark> para operações de entrada e saída
-- <mark>**Coleções**</mark> como listas e mapas
-- <mark>**Suporte a threads**</mark> para execução assíncrona
-- <mark>**Suporte a multiplos modulos**</mark> import de outros arquivos
--  <mark>**Suporte a closures**</mark>
+## Documentation
+- **Interpreter Engine Documentation**: [P++ Docs](https://deepwiki.com/GustavoLyra23/PPlus)
 
-## Requisitos do Sistema
+## Installation
 
-- Java JDK 21 ou superior
-- Gradle 8.0 ou superior
-
-## Documentação
-
-- **Documentação da Engine do Interpretador**: [P++ Docs](https://deepwiki.com/GustavoLyra23/PPlus)
-
-## Instalação
-
-### Clonar o repositório
-
+### Clone the repository
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd pplus
-``` 
-
-## Compilar o projeto
-
-#### Compilar projeto principal
-
-```bash
-./gradlew build
-```
-
-#### Criar JAR executável
-
-```bash
-./gradlew shadowJar
-```
-
-#### Gerar executável Windows (opcional)
-
-```bash
-./gradlew launch4j 
-```
-
-#### Executar um programa P++
-
-Usando JAR
-
-```bash
-java -jar build/libs/portugolpp.jar programa.ppp
-```
-
-#### Usando executável Windows
-
-```bash
-./portugolpp.exe programa.ppp
-```
-
-<div>
-<img src="https://img.shields.io/badge/status-desenvolvimento-green.svg" alt="Status" />
-</div>
-
-
-
