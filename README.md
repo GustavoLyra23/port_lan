@@ -52,15 +52,15 @@ cd pplus
 Using JAR
 
 ```bash
-java -jar build/libs/portugolpp.jar programa.ppp
+java -jar build/libs/portugolpp.jar programa.pplus
 ```
 
 #### Using Windows exe
 
 ```bash
-./portugolpp.exe programa.ppp
+./portugolpp.exe programa.pplus
 ```
-
+This is normal text and this is <span style="color: red;">red text</span>.
 <div>
 <img src="https://img.shields.io/badge/status-desenvolvimento-green.svg" alt="Status" />
 </div>
