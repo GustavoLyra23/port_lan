@@ -80,6 +80,6 @@ fun visitInterfaces(tree: ProgramaContext, global: Environment) {
     }
 }
 
-fun comoObjetoOuErro(v: Value): Value.Object =
+fun asObjectOrError(v: Value): Value.Object =
     v as? Value.Object
         ?: throw SemanticError("Nao e possivel acessar propriedades de um nao-objeto: $v")

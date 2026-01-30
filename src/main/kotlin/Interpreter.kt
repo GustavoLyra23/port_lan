@@ -31,38 +31,21 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
 
     override fun visitImportarDeclaracao(ctx: ImportarDeclaracaoContext): Value {
         val fileName = ctx.TEXTO_LITERAL().text.removeSurrounding("\"")
-        processarImport(fileName)
+        processImport(fileName)
         return Value.Null
     }
 
-    private fun processarDeclaracoesDoArquivo(tree: ProgramaContext) {
+    private fun processModuleDeclarations(tree: ProgramaContext) {
         tree.declaracao().forEach { dec ->
-            dec.declaracaoInterface()?.let {
-                visitDeclaracaoInterface(it)
-            }
-        }
-
-        tree.declaracao()?.forEach { dec ->
-            dec.declaracaoClasse()?.let {
-                visitDeclaracaoClasse(it)
-            }
-        }
-
-        tree.declaracao()?.forEach { dec ->
-            dec.declaracaoFuncao()?.let {
-                visitDeclaracaoFuncao(it)
-            }
-        }
-
-        tree.declaracao()?.forEach { dec ->
-            dec.declaracaoVar()?.let {
-                visitDeclaracaoVar(it)
-            }
+            dec.declaracaoInterface()?.let(::visitDeclaracaoInterface)
+            dec.declaracaoClasse()?.let(::visitDeclaracaoClasse)
+            dec.declaracaoFuncao()?.let(::visitDeclaracaoFuncao)
+            dec.declaracaoVar()?.let(::visitDeclaracaoVar)
         }
     }
 
 
-    fun processarImport(filName: String) {
+    fun processImport(filName: String) {
         if (importedModules.contains(filName)) return
         importedModules.add(filName)
         try {
@@ -77,7 +60,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
                 visitImportarDeclaracao(import)
             }
 
-            processarDeclaracoesDoArquivo(tree)
+            processModuleDeclarations(tree)
         } catch (e: Exception) {
             throw ArquivoException(e.message ?: "Falha ao processar import")
         }
@@ -103,7 +86,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
         return Value.Null
     }
 
-    override fun visitDeclaracaoTentarCapturar(ctx: DeclaracaoTentarCapturarContext?): Value? {
+    override fun visitDeclaracaoTentarCapturar(ctx: DeclaracaoTentarCapturarContext?): Value {
         try {
             visit(ctx?.bloco(0))
         } catch (_: Exception) {
@@ -464,8 +447,8 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             val argsCtx = ctx.getChild(i + 3) as ArgumentosContext
             argsCtx.expressao().map { visit(it) }
         } else emptyList()
-        val passo = if (temArgsCtx) 5 else 4
-        return arguments to passo
+        val step = if (temArgsCtx) 5 else 4
+        return arguments to step
     }
 
     private fun callMethodOrError(obj: Value.Object, nome: String, args: List<Value>): Value {
@@ -488,7 +471,7 @@ class Interpreter : PortugolPPBaseVisitor<Value>() {
             if (!isDot(ctx, i)) break
 
             val id = ctx.getChild(i + 1).text
-            val obj = comoObjetoOuErro(r)
+            val obj = asObjectOrError(r)
 
             if (isCall(ctx, i, n)) {
                 val (args, index) = extractArgumentsAndIndex(ctx, i, n)
