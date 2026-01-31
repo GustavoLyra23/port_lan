@@ -1,3 +1,3 @@
 package constants
 
-const val EXTENSION = ".pplus"
+const val EXTENSION = ".plar"

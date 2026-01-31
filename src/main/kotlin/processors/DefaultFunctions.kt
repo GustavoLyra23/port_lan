@@ -1,7 +1,7 @@
 package processors
 
 import extractValueToPrint
-import helpers.defineSocketFromArgs
+import helpers.getHostAndPortFromArgs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -75,7 +75,7 @@ fun registerIOFunctions(global: Environment) {
     //TODO: rever funcoes socket
     global.define("ler_socket", Value.Fun("ler_socket", null, "Texto", global) { args ->
         try {
-            val (host, port) = defineSocketFromArgs(args)
+            val (host, port) = getHostAndPortFromArgs(args)
             val socket = ServerSocket()
             socket.bind(java.net.InetSocketAddress(host, port))
             val input = socket.accept().getInputStream()
@@ -91,7 +91,7 @@ fun registerIOFunctions(global: Environment) {
         try {
             if (args.isEmpty() || args.size != 1 && args.size < 3)
                 throw InputException("argumentos invalidos pra socket_write")
-            val (host, port) = defineSocketFromArgs(args)
+            val (host, port) = getHostAndPortFromArgs(args)
             val socket = ServerSocket()
             socket.bind(java.net.InetSocketAddress(host, port))
             val output = socket.accept().getOutputStream()

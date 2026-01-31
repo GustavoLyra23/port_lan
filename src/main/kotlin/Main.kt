@@ -3,7 +3,6 @@ import helpers.validateFile
 import org.antlr.v4.runtime.*
 import org.gustavolyra.PlarLexer
 import org.gustavolyra.PlarParser
-import org.gustavolyra.portugolpp.Interpreter
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.system.exitProcess
@@ -12,7 +11,7 @@ var interpreter = Interpreter()
 val STATIC_PATH: Path = Path.of(System.getProperty("user.dir"))
 
 fun main() {
-    println("Iniciando Portugol++")
+    println("Iniciando Interpretador Plar")
     when {
 //       args.getOrNull(0) == "run" && args.size > 1 -> execFile(args[1])
         //REPL direto...

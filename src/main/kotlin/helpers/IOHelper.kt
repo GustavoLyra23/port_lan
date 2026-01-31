@@ -28,7 +28,7 @@ fun validateFile(arquivo: File): Boolean {
     return true
 }
 
-fun defineSocketFromArgs(args: List<Value>): Pair<String, Int> {
+fun getHostAndPortFromArgs(args: List<Value>): Pair<String, Int> {
     var host = Value.Text("localhost")
     var port = Value.Integer(8080)
     if (!args.isEmpty() && args.size >= 2) {

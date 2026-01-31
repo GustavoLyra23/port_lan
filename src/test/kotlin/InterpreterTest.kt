@@ -2,7 +2,6 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.PlarLexer
 import org.gustavolyra.PlarParser
-import org.gustavolyra.portugolpp.Interpreter
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.AfterTest

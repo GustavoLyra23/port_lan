@@ -1,7 +1,4 @@
-package org.gustavolyra.portugolpp
-
 import helpers.solvePath
-import isDot
 import models.Environment
 import models.Value
 import models.enums.LOOP
@@ -137,7 +134,7 @@ class Interpreter : PlarBaseVisitor<Value>() {
     override fun visitDeclaracaoFuncao(ctx: PlarParser.DeclaracaoFuncaoContext): Value {
         val name = ctx.ID().text
         val returnType = ctx.tipo()?.text
-        if (isReturnInvalid(returnType, global)) throw SemanticError("Tipo de retorno inválido: $returnType")
+        if (isReturnInvalid(returnType, global)) throw SemanticError("Tipo de retorno invalido: $returnType")
         val func = Value.Fun(
             name = name,
             declaration = ctx,
@@ -154,7 +151,10 @@ class Interpreter : PlarBaseVisitor<Value>() {
     ): (List<Value>) -> Value {
         return { args ->
             val declaredParameters = ctx.listaParams()?.param()?.size ?: 0
-            if (args.size > declaredParameters) throw SemanticError("Funcao '$name' recebeu ${args.size} parametros, mas espera $declaredParameters")
+            if (args.size > declaredParameters) throw SemanticError(
+                "Funcao '$name' recebeu ${args.size} " +
+                    "parametros, mas espera $declaredParameters"
+            )
             ctx.listaParams()?.param()?.forEachIndexed { i, param ->
                 if (i < args.size) closure.define(param.ID().text, args[i])
             }
@@ -371,7 +371,7 @@ class Interpreter : PlarBaseVisitor<Value>() {
             val operator = ctx.getChild(0).text
             val operand = visit(ctx.unario())
             return when (operator) {
-                "!" -> if (operand is Value.Logic) Value.Logic(!operand.value) else throw SemanticError("Operador '!' requer valor lógico")
+                "!" -> if (operand is Value.Logic) Value.Logic(!operand.value) else throw SemanticError("Operador '!' requer valor logico")
                 "-" -> when (operand) {
                     is Value.Integer -> Value.Integer(-operand.value)
                     is Value.Real -> Value.Real(-operand.value)
