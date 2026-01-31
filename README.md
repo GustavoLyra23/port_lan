@@ -18,7 +18,7 @@
 - Gradle 8.0 or higher
 
 ## Documentation
-- **Interpreter Engine Documentation**: [P++ Docs](https://deepwiki.com/GustavoLyra23/PPlus)
+- **Interpreter Engine Documentation**: [Docs](https://deepwiki.com/GustavoLyra23/PPlus)
 
 ## Installation
 
