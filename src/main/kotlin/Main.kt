@@ -35,7 +35,7 @@ fun interactiveMode() {
             }
 
             input == "reset" -> interpreter = Interpreter()
-            else -> execEngine(input)
+            else -> execInterpreter(input)
         }
     }
 }
@@ -44,14 +44,14 @@ fun execFile(file: Path) {
     try {
         if (!validateFile(file.toFile())) return
         val fileData = file.readText()
-        execEngine(fileData)
+        execInterpreter(fileData)
     } catch (e: Exception) {
         println("Erro ao ler/executar o arquivo: ${e.message}")
     }
 }
 
 
-fun execEngine(code: String) {
+fun execInterpreter(code: String) {
     try {
         val input = CharStreams.fromString(code)
         val lexer = PlarLexer(input)
