@@ -1,3 +1,4 @@
+import core.Interpreter
 import helpers.solvePath
 import helpers.validateFile
 import org.antlr.v4.runtime.*

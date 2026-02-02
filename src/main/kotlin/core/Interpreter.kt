@@ -1,18 +1,35 @@
+package core
+
+import core.processors.areEqual
+import core.processors.asObjectOrError
+import core.processors.compare
+import core.processors.defineDefaultFunctions
+import core.processors.getIndexFromWord
+import core.processors.getSuperClass
+import core.processors.isReturnInvalid
+import core.processors.processAdd
+import core.processors.processMultiplication
+import core.processors.readIdentitiesToKey
+import core.processors.validateInterface
+import core.processors.validateSuperClass
+import core.processors.visitClasses
+import core.processors.visitInterfaces
 import helpers.solvePath
+import isDot
 import models.Environment
 import models.Value
 import models.enums.LOOP
-import models.errors.*
+import models.errors.ArquivoException
+import models.errors.BreakException
+import models.errors.ContinueException
+import models.errors.RetornoException
+import models.errors.SemanticError
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.PlarBaseVisitor
 import org.gustavolyra.PlarLexer
 import org.gustavolyra.PlarParser
-import org.gustavolyra.PlarParser.ImportarDeclaracaoContext
-import org.gustavolyra.PlarParser.ProgramaContext
-import processors.*
 import java.nio.file.Files
-
 
 @Suppress("REDUNDANT_OVERRIDE")
 class Interpreter : PlarBaseVisitor<Value>() {
@@ -30,13 +47,13 @@ class Interpreter : PlarBaseVisitor<Value>() {
         defineDefaultFunctions(global)
     }
 
-    override fun visitImportarDeclaracao(ctx: ImportarDeclaracaoContext): Value {
+    override fun visitImportarDeclaracao(ctx: PlarParser.ImportarDeclaracaoContext): Value {
         val fileName = ctx.TEXTO_LITERAL().text.removeSurrounding("\"")
         processImport(fileName)
         return Value.Null
     }
 
-    private fun processModuleDeclarations(tree: ProgramaContext) {
+    private fun processModuleDeclarations(tree: PlarParser.ProgramaContext) {
         tree.declaracao().forEach { dec ->
             dec.declaracaoInterface()?.let(::visitDeclaracaoInterface)
             dec.declaracaoClasse()?.let(::visitDeclaracaoClasse)
@@ -67,7 +84,7 @@ class Interpreter : PlarBaseVisitor<Value>() {
         }
     }
 
-    fun interpret(tree: ProgramaContext) {
+    fun interpret(tree: PlarParser.ProgramaContext) {
         try {
             tree.importarDeclaracao()?.forEach { import ->
                 visitImportarDeclaracao(import)
@@ -153,7 +170,7 @@ class Interpreter : PlarBaseVisitor<Value>() {
             val declaredParameters = ctx.listaParams()?.param()?.size ?: 0
             if (args.size > declaredParameters) throw SemanticError(
                 "Funcao '$name' recebeu ${args.size} " +
-                    "parametros, mas espera $declaredParameters"
+                        "parametros, mas espera $declaredParameters"
             )
             ctx.listaParams()?.param()?.forEachIndexed { i, param ->
                 if (i < args.size) closure.define(param.ID().text, args[i])

@@ -1,3 +1,4 @@
+import core.Interpreter
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.PlarLexer

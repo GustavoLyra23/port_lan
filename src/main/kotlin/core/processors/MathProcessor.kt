@@ -1,4 +1,4 @@
-package processors
+package core.processors
 
 import extractValueToString
 import models.Value

@@ -1,5 +1,6 @@
 package processors
 
+import core.processors.isReturnInvalid
 import models.Environment
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

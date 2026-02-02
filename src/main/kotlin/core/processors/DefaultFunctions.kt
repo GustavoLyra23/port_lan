@@ -1,4 +1,4 @@
-package processors
+package core.processors
 
 import extractValueToPrint
 import helpers.getHostAndPortFromArgs
@@ -10,11 +10,12 @@ import models.Value
 import models.errors.ArquivoException
 import models.errors.InputException
 import models.errors.PlarRuntimeException
-import processors.FileIOProcessor.readFile
-import processors.FileIOProcessor.writeFile
+import core.processors.FileIOProcessor.readFile
+import core.processors.FileIOProcessor.writeFile
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.util.*
 
@@ -77,7 +78,7 @@ fun registerIOFunctions(global: Environment) {
         try {
             val (host, port) = getHostAndPortFromArgs(args)
             val socket = ServerSocket()
-            socket.bind(java.net.InetSocketAddress(host, port))
+            socket.bind(InetSocketAddress(host, port))
             val input = socket.accept().getInputStream()
             val reader = BufferedReader(InputStreamReader(input))
             val response = reader.readLine()
@@ -93,7 +94,7 @@ fun registerIOFunctions(global: Environment) {
                 throw InputException("argumentos invalidos pra socket_write")
             val (host, port) = getHostAndPortFromArgs(args)
             val socket = ServerSocket()
-            socket.bind(java.net.InetSocketAddress(host, port))
+            socket.bind(InetSocketAddress(host, port))
             val output = socket.accept().getOutputStream()
             val writer = PrintWriter(output, true)
             val buffer = (if (args.size == 1) args[0] else args[2]) as Value.Text;
