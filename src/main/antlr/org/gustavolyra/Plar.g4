@@ -79,7 +79,7 @@ declaracaoVar
     ;
 
 declaracaoFuncao
-    : 'funcao' ID '(' listaParams? ')' (':' tipo)? bloco
+    : 'funcao' ID? '(' listaParams? ')' (':' tipo)? bloco
     ;
 
 listaParams

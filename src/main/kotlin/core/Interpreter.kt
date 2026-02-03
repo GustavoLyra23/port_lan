@@ -1,29 +1,12 @@
 package core
 
-import core.processors.areEqual
-import core.processors.asObjectOrError
-import core.processors.compare
-import core.processors.defineDefaultFunctions
-import core.processors.getIndexFromWord
-import core.processors.getSuperClass
-import core.processors.isReturnInvalid
-import core.processors.processAdd
-import core.processors.processMultiplication
-import core.processors.readIdentitiesToKey
-import core.processors.validateInterface
-import core.processors.validateSuperClass
-import core.processors.visitClasses
-import core.processors.visitInterfaces
+import core.processors.*
 import helpers.solvePath
 import isDot
 import models.Environment
 import models.Value
 import models.enums.LOOP
-import models.errors.ArquivoException
-import models.errors.BreakException
-import models.errors.ContinueException
-import models.errors.RetornoException
-import models.errors.SemanticError
+import models.errors.*
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.PlarBaseVisitor
@@ -149,17 +132,17 @@ class Interpreter : PlarBaseVisitor<Value>() {
     }
 
     override fun visitDeclaracaoFuncao(ctx: PlarParser.DeclaracaoFuncaoContext): Value {
-        val name = ctx.ID().text
+        val name = ctx.ID()?.text ?: ""
         val returnType = ctx.tipo()?.text
         if (isReturnInvalid(returnType, global)) throw SemanticError("Tipo de retorno invalido: $returnType")
         val func = Value.Fun(
-            name = name,
+            name = "",
             declaration = ctx,
             returnType = returnType,
             closure = environment,
             implementation = definirImplementacao(ctx, name, Environment(environment))
         )
-        environment.define(name, func)
+        if (name != "") environment.define(name, func)
         return func
     }
 
@@ -169,8 +152,8 @@ class Interpreter : PlarBaseVisitor<Value>() {
         return { args ->
             val declaredParameters = ctx.listaParams()?.param()?.size ?: 0
             if (args.size > declaredParameters) throw SemanticError(
-                "Funcao '$name' recebeu ${args.size} " +
-                        "parametros, mas espera $declaredParameters"
+                "Funcao recebeu ${args.size} " +
+                    "parametros, mas espera $declaredParameters"
             )
             ctx.listaParams()?.param()?.forEachIndexed { i, param ->
                 if (i < args.size) closure.define(param.ID().text, args[i])
@@ -179,7 +162,7 @@ class Interpreter : PlarBaseVisitor<Value>() {
             val actualEnviromnent = environment
             environment = closure
             val `fun` = Value.Fun(
-                ctx.ID().text, ctx, ctx.tipo()?.text, global
+                ctx.ID()?.text ?: "", ctx, ctx.tipo()?.text, global
             )
             val oldFunction = actualFunction
             actualFunction = `fun`

@@ -21,13 +21,13 @@ fun main() {
 }
 
 fun interactiveMode() {
-    println("Digite 'exit' para sair")
+    println("Digite 'sair' para interromper o programa")
     println("Digite 'run <caminho>' para executar um arquivo")
     while (true) {
         print("> ")
         val input = readlnOrNull()?.trim() ?: continue
         when {
-            input == "exit" -> exitProcess(0)
+            input == "sair" -> exitProcess(0)
             input.startsWith("run ") -> {
                 val path = input.substring(4).trim()
                 val file = solvePath(path)

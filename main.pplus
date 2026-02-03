@@ -1,5 +1,0 @@
-classe T {
-}
-
-var t1 = novo T();
-var t2 = novo T();

@@ -1,5 +1,7 @@
 package core.processors
 
+import core.processors.FileIOProcessor.readFile
+import core.processors.FileIOProcessor.writeFile
 import extractValueToPrint
 import helpers.getHostAndPortFromArgs
 import kotlinx.coroutines.delay
@@ -10,13 +12,12 @@ import models.Value
 import models.errors.ArquivoException
 import models.errors.InputException
 import models.errors.PlarRuntimeException
-import core.processors.FileIOProcessor.readFile
-import core.processors.FileIOProcessor.writeFile
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.InetSocketAddress
 import java.net.ServerSocket
+import java.nio.file.Path
 import java.util.*
 
 fun defineDefaultFunctions(global: Environment) {
@@ -30,6 +31,15 @@ fun registerIOFunctions(global: Environment) {
     global.define("ler", Value.Fun("ler", null, "Texto", global) { args ->
         Scanner(System.`in`).nextLine().let { Value.Text(it) }
     })
+
+    global.define("diretorio_atual", Value.Fun("atual_dir", null, "Texto", global) {
+        Value.Text(Path.of(System.getProperty("user.dir"))
+            .toAbsolutePath()
+            .normalize()
+            .toString())
+    })
+
+
     global.define("readFile", Value.Fun("readFile", null, "Texto", global) { args ->
         if (args.isEmpty()) throw RuntimeException("Funcao readFile requer um argumento (caminho do arquivo)")
         if (args.size > 1) throw RuntimeException("Funcaoo readFile aceita apenas um argumento")

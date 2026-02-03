@@ -22,7 +22,7 @@ fun validateFile(arquivo: File): Boolean {
         return false
     }
     if (!arquivo.name.endsWith(EXTENSION)) {
-        println("Formato do arquivo invalido! Use arquivos .pplus")
+        println("Formato do arquivo invalido! Use arquivos .plar")
         return false
     }
     return true
