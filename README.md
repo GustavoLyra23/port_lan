@@ -1,5 +1,5 @@
 ## About the Project
-<mark>_Plar_</mark> is a programming language designed for Portuguese speakers, making programming learning easier through a syntax similar to Portugol, while including modern features from object-oriented languages.
+<mark>_Plar_</mark> is a programming language designed for Portuguese speakers, making programming learning easier while including modern features from object-oriented languages.
 
 ## Features
 - <mark>**Friendly syntax**</mark> in Portuguese based on Portugol
