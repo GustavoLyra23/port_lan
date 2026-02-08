@@ -12,6 +12,8 @@
 - <mark>**Thread support**</mark> for asynchronous execution
 - <mark>**Multiple module support**</mark> – import from other files
 - <mark>**Closure support**</mark>
+- <mark>**Cast**</mark>
+- <mark>**Sockets**</mark>
 
 ## System Requirements
 - Java JDK 21 or higher
