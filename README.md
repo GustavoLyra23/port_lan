@@ -1,5 +1,5 @@
 ## About the Project
-<mark>_Plar_</mark> is a programming language designed for Portuguese speakers, making programming learning easier while including modern features from object-oriented languages.
+<mark>_Mag_</mark> is a programming language designed for Portuguese speakers, making programming learning easier while including modern features from object-oriented languages.
 
 ## Features
 - <mark>**Friendly syntax**</mark> in Portuguese based on Portugol
@@ -54,13 +54,13 @@ cd pplus
 Using JAR
 
 ```bash
-java -jar build/libs/portugolpp.jar programa.plar
+java -jar build/libs/portugolpp.jar programa.Mag
 ```
 
 #### Using Windows exe
 
 ```bash
-./portugolpp.exe programa.plar
+./portugolpp.exe programa.Mag
 ```
 <div>
 <img src="https://img.shields.io/badge/status-desenvolvimento-green.svg" alt="Status" />
