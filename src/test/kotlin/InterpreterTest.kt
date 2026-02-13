@@ -29,19 +29,14 @@ class InterpreterTest {
     fun `escrever function should print the correct message`() {
         val outputStream = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStream))
-
         val code = """
             escrever("teste");
         """.trimIndent()
-
         val lexer = MagLexer(CharStreams.fromString(code))
         val parser = MagParser(CommonTokenStream(lexer))
         val tree = parser.programa()
-
         val result = interpreter.visit(tree)
-
         val output = outputStream.toString().trim()
-
         assertEquals("teste", output)
         assertEquals(null, result)
     }

@@ -12,6 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.gustavolyra.MagBaseVisitor
 import org.gustavolyra.MagLexer
 import org.gustavolyra.MagParser
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 
 @Suppress("REDUNDANT_OVERRIDE")
@@ -23,6 +25,8 @@ class Interpreter : MagBaseVisitor<Value>() {
 
     // ref to the function being executed
     private var actualFunction: Value.Fun? = null
+
+    private val log: Logger = LoggerFactory.getLogger("Interpreter")
 
     private val importedModules = mutableSetOf<String>()
 
@@ -78,7 +82,7 @@ class Interpreter : MagBaseVisitor<Value>() {
             visitClasses(tree, global)
             tree.declaracao().forEach { visit(it) }
         } catch (e: Exception) {
-            println(e)
+            log.error(e.toString())
         }
     }
 
@@ -491,15 +495,15 @@ class Interpreter : MagBaseVisitor<Value>() {
         var iterationsNum = 0
         while (iterationsNum < LOOP.MAX_LOOP.valor) {
             val condicao = visit(ctx.expressao())
-            println("Condicao do loop: $condicao")
+            log.info("Condicao do loop: $condicao")
             if (condicao !is Value.Logic) throw SemanticError("Condicao do 'enquanto' deve ser um valor logico")
             if (!condicao.value) {
-                println("Condicao falsa, saindo do loop")
+                log.info("Condicao falsa, saindo do loop")
                 break
             }
 
             iterationsNum++
-            println("Iteracao $iterationsNum do loop")
+            log.info("Iteracao $iterationsNum do loop")
 
             try {
                 visit(ctx.declaracao())
@@ -513,7 +517,7 @@ class Interpreter : MagBaseVisitor<Value>() {
         }
 
         if (iterationsNum >= LOOP.MAX_LOOP.valor) {
-            println("Aviso: Loop infinito detectado! Saindo do loop.")
+            log.info("Aviso: Loop infinito detectado! Saindo do loop.")
             return Value.Null
         }
         return Value.Null
@@ -563,7 +567,7 @@ class Interpreter : MagBaseVisitor<Value>() {
                 (c as? Value.Logic)?.value ?: throw SemanticError("Condicao do 'enquanto' deve ser um valor logico")
             if (!logicRes) break
             if (++iter >= 100) {
-                println("Loop infinito detectado! Saindo do loop.")
+                log.warn("Loop infinito detectado! Saindo do loop.")
                 break
             }
         } while (true)

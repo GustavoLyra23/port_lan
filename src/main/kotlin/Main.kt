@@ -1,34 +1,51 @@
 import core.Interpreter
+import core.gateways.GithubGateway
+import core.io.AnimateCLI
 import helpers.solvePath
 import helpers.validateFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.antlr.v4.runtime.*
 import org.gustavolyra.MagLexer
 import org.gustavolyra.MagParser
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.system.exitProcess
 
 var interpreter = Interpreter()
-val STATIC_PATH: Path =
-    Path.of(System.getProperty("user.dir")) //cwd
+val STATIC_PATH: Path = Path.of(System.getProperty("user.dir")) //cwd
+private val log: Logger = LoggerFactory.getLogger("Main")
 
-fun main() {
-    println("Iniciando Interpretador Mag")
-    when {
-//       args.getOrNull(0) == "run" && args.size > 1 -> execFile(args[1])
-        //REPL direto...
-        else -> interactiveMode()
-    }
+fun main() = runBlocking() {
+    log.info("Iniciando Interpretador Mag")
+    interactiveMode(this);
 }
 
-fun interactiveMode() {
-    println("Digite 'sair' para interromper o programa")
-    println("Digite 'run <caminho>' para executar um arquivo")
+suspend fun interactiveMode(scope: CoroutineScope) {
+    log.info("Digite 'sair' para interromper o programa")
+    log.info("Digite 'run <caminho>' para executar um arquivo")
     while (true) {
-        print("> ")
+        print("→ ")
         val input = readlnOrNull()?.trim() ?: continue
         when {
             input == "sair" -> exitProcess(0)
+            input.startsWith("importar") -> {
+                val animJob = scope.launch {
+                    AnimateCLI.runLoadAnimation()
+                }
+                // TODO: find a better way to validate this input
+                val inputArray = input.split(" ");
+                GithubGateway.instance.getLibrary(
+                    inputArray[1],
+                    Path.of("bibliotecas"), ""
+                )
+                animJob.cancel()
+                println()
+            }
+
             input.startsWith("run ") -> {
                 val path = input.substring(4).trim()
                 val file = solvePath(path)
@@ -47,7 +64,7 @@ fun execFile(file: Path) {
         val fileData = file.readText()
         execInterpreter(fileData)
     } catch (e: Exception) {
-        println("Erro ao ler/executar o arquivo: ${e.message}")
+        log.error("Erro ao ler/executar o arquivo: ${e.message}")
     }
 }
 
@@ -68,18 +85,18 @@ fun execInterpreter(code: String) {
                 msg: String?,
                 e: RecognitionException?
             ) {
-                println("Erro de sintaxe na linha $line:$charPositionInLine")
+                log.error("Erro de sintaxe na linha $line:$charPositionInLine")
             }
         })
 
         val tree = parser.programa()
         if (tree == null) {
-            println("Analise sintatica falhou arvore sintatica nula!")
+            log.error("Analise sintatica falhou arvore sintatica nula!")
             return
         }
         interpreter.interpret(tree)
     } catch (e: Exception) {
-        println("Erro ao executar o programa ${e.message}")
+        log.error("Erro ao executar o programa ${e.message}")
     }
 }
 
