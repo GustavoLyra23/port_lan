@@ -753,8 +753,7 @@ class Interpreter : MagBaseVisitor<Value>() {
             throw SemanticError("Sintaxe invalida para criacao de objeto")
         }
     }
-
-
+    
     override fun visitPrimario(ctx: MagParser.PrimarioContext): Value {
         return when {
             ctx.text == "nulo" -> Value.Null

@@ -17,30 +17,29 @@ import kotlin.system.exitProcess
 
 var interpreter = Interpreter()
 val STATIC_PATH: Path = Path.of(System.getProperty("user.dir")) //cwd
-private val log: Logger = LoggerFactory.getLogger("Main")
+val mainLog: Logger = LoggerFactory.getLogger("Main")
 
 fun main() = runBlocking() {
-    log.info("Iniciando Interpretador Mag")
+    mainLog.info("Iniciando Interpretador Mag")
     interactiveMode(this);
 }
 
-suspend fun interactiveMode(scope: CoroutineScope) {
-    log.info("Digite 'sair' para interromper o programa")
-    log.info("Digite 'run <caminho>' para executar um arquivo")
+fun interactiveMode(scope: CoroutineScope) {
+    mainLog.info("Digite 'sair' para interromper o programa")
+    mainLog.info("Digite 'run <caminho>' para executar um arquivo")
     while (true) {
         print("→ ")
         val input = readlnOrNull()?.trim() ?: continue
         when {
             input == "sair" -> exitProcess(0)
             input.startsWith("importar") -> {
+                val inputArray = input.split(" ");
                 val animJob = scope.launch {
                     AnimateCLI.runLoadAnimation()
                 }
-                // TODO: find a better way to validate this input
-                val inputArray = input.split(" ");
                 GithubGateway.instance.getLibrary(
-                    inputArray[1],
-                    Path.of("bibliotecas"), ""
+                    inputArray[1], // TODO: find a better way to get and validate this input
+                    Path.of("bibliotecas")
                 )
                 animJob.cancel()
                 println()
@@ -64,7 +63,7 @@ fun execFile(file: Path) {
         val fileData = file.readText()
         execInterpreter(fileData)
     } catch (e: Exception) {
-        log.error("Erro ao ler/executar o arquivo: ${e.message}")
+        mainLog.error("Erro ao ler/executar o arquivo: ${e.message}")
     }
 }
 
@@ -85,18 +84,18 @@ fun execInterpreter(code: String) {
                 msg: String?,
                 e: RecognitionException?
             ) {
-                log.error("Erro de sintaxe na linha $line:$charPositionInLine")
+                mainLog.error("Erro de sintaxe na linha $line:$charPositionInLine")
             }
         })
 
         val tree = parser.programa()
         if (tree == null) {
-            log.error("Analise sintatica falhou arvore sintatica nula!")
+            mainLog.error("Analise sintatica falhou arvore sintatica nula!")
             return
         }
         interpreter.interpret(tree)
     } catch (e: Exception) {
-        log.error("Erro ao executar o programa ${e.message}")
+        mainLog.error("Erro ao executar o programa ${e.message}")
     }
 }
 

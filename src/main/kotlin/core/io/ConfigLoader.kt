@@ -1,3 +1,4 @@
 package core.io
 
-class ConfigLoader
+//TODO: implement class...
+class ConfigLoader {}
