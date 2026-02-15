@@ -4,9 +4,6 @@ import STATIC_PATH
 import constants.EXTENSION
 import models.Value
 import java.io.File
-import java.net.URI
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 fun solvePath(pathName: String): Path {
@@ -17,13 +14,6 @@ fun solvePath(pathName: String): Path {
     } else {
         STATIC_PATH.resolve(path).normalize()
     }
-}
-
-fun inferFileNameFromUrl(url: String): String {
-    val path = URI.create(url).path
-    val lastSegment = path.substringAfterLast('/', missingDelimiterValue = "downloaded.file")
-    val decoded = URLDecoder.decode(lastSegment, StandardCharsets.UTF_8)
-    return decoded.ifBlank { "downloaded.file" }
 }
 
 fun validateFile(arquivo: File): Boolean {
