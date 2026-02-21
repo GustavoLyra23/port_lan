@@ -14,6 +14,7 @@
 - <mark>**Closure support**</mark>
 - <mark>**Cast**</mark>
 - <mark>**Sockets**</mark>
+- <mark>**Library import**</mark> import libraries from github
 
 ## System Requirements
 - Java JDK 21 or higher
